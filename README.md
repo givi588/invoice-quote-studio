@@ -40,7 +40,7 @@ npm run build
 
 Unit tests cover integer price calculations, quantities, percentage rounding, invalid values, serialization shape, and storage failure. The React render smoke test checks that the application renders actual HTML on the server through Vite's JSX transform, preventing the empty-page failure common to missing JSX runtime imports. The workflow also creates the production build.
 
-**Local verification note:** The project was assembled where internet access to the npm registry was restricted, so dependency-based React rendering and production build require GitHub Actions or an npm-enabled machine. Pure Node calculation tests can run without dependencies.
+**Verification:** The pure Node calculation tests were run locally. The GitHub Actions workflow for [Pull Request #1](https://github.com/givi588/invoice-quote-studio/pull/1) also completed the expanded unit suite, React server-render smoke check, and production build successfully. Browser-level interaction and PDF print tests are separate manual checks.
 
 ## GitHub Pages deployment
 
