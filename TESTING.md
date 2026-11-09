@@ -14,7 +14,7 @@ npm run build
 - `npm run test:render`: renders the actual React app through Vite's JSX transformer on the server and asserts the editor, sample warning, PDF action and privacy text exist.
 - `npm run build`: checks that Vite compiles the production site.
 
-**Status for the initial handoff:** 18/18 dependency-free Node unit tests pass locally. The server-render smoke test and production build require npm dependencies and are configured for GitHub Actions; they have **not** been confirmed locally in the restricted environment where the project was prepared.
+**Verification:** The original project passed 18 dependency-free Node unit tests locally. After publishing the source to GitHub, the suite was expanded to 22 checks, and GitHub Actions successfully ran the unit tests, React server-render smoke test, and production build in Pull Request #1. Manual browser and print checks remain necessary.
 
 ## Manual browser checklist (after GitHub Pages is live)
 
