@@ -4,8 +4,8 @@ import {
   STORAGE_KEY, SUPPORTED_CURRENCIES, MAX_ITEMS, parseMoney, parseRate,
   parseQuantity, calculateTotals, createBlankDocument, createExampleDocument,
   normalizeDraft, documentIssues, plusDays, localISODate, formatMoney, safeFileName
-} from '../src/lib/invoice.js';
-import { loadSavedDraft, saveDraft, removeSavedDraft } from '../src/lib/storage.js';
+} from '../src/lib/invoice.ts';
+import { loadSavedDraft, saveDraft, removeSavedDraft } from '../src/lib/storage.ts';
 
 const base = () => createExampleDocument(new Date(2026, 0, 15, 12));
 const memory = () => {

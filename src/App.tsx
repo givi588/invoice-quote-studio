@@ -3,35 +3,56 @@ import {
   MAX_ITEMS, SUPPORTED_CURRENCIES, calculateTotals, createBlankDocument,
   createExampleDocument, documentIssues, formatMoney, normalizeDraft,
   parseMoney, safeFileName
-} from './lib/invoice.js';
-import { loadSavedDraft, removeSavedDraft, saveDraft } from './lib/storage.js';
+} from './lib/invoice.ts';
+import { loadSavedDraft, removeSavedDraft, saveDraft, type DraftLoadResult } from './lib/storage.ts';
+import { isCurrency, type InvoiceDraft, type PartyDetails, type Totals } from './lib/invoice.ts';
 
-function readInitial(){
+function readInitial(): DraftLoadResult {
   if(typeof window==='undefined')return {document:createExampleDocument(),blocked:false,message:''};
   try{return loadSavedDraft(window.localStorage);}
   catch{return {document:createExampleDocument(),blocked:true,message:'Browser storage unavailable. Automatic saving is disabled.'};}
 }
 function Arrow(){return <span aria-hidden="true">↗</span>;}
-function Field({label,id,value,onChange,placeholder='',type='text',inputMode,maxLength=200,required=false}){
+interface FieldProps {
+  label: string;
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  type?: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'];
+  maxLength?: number;
+  required?: boolean;
+}
+function Field({label,id,value,onChange,placeholder='',type='text',inputMode,maxLength=200,required=false}: FieldProps){
   return <div className="field"><label htmlFor={id}>{label}{required&&<span className="required"> *</span>}</label><input id={id} name={id} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} type={type} inputMode={inputMode} maxLength={maxLength}/></div>;
 }
-function Area({label,id,value,onChange,placeholder='',rows=2,maxLength=1300}){
+interface AreaProps {
+  label: string;
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  rows?: number;
+  maxLength?: number;
+}
+function Area({label,id,value,onChange,placeholder='',rows=2,maxLength=1300}: AreaProps){
   return <div className="field"><label htmlFor={id}>{label}</label><textarea id={id} name={id} value={value} onChange={e=>onChange(e.target.value)} rows={rows} maxLength={maxLength} placeholder={placeholder}/></div>;
 }
-function SectionHeading({number,title,description}){
+function SectionHeading({number,title,description}: {number: string; title: string; description?: string}){
   return <div className="section-head"><span className="section-count">{number}</span><div><h3>{title}</h3>{description&&<p>{description}</p>}</div></div>;
 }
-function Party({data}){
+function Party({data}: {data: PartyDetails}){
   return <div className="party-details"><strong>{data.name||'—'}</strong>{data.email&&<span>{data.email}</span>}{data.address&&<span className="pre-line">{data.address}</span>}</div>;
 }
-function DateLabel({iso}){
+function DateLabel({iso}: {iso: string}){
   if(!iso)return '—';
   const d=new Date(iso+'T12:00:00');
   return Number.isNaN(d.getTime())?iso:new Intl.DateTimeFormat('en-US',{year:'numeric',month:'short',day:'numeric'}).format(d);
 }
-function Preview({draft,totals}){
+function Preview({draft,totals}: {draft: InvoiceDraft; totals: Totals | null}){
   const currency=draft.currency;
-  const money=n=>formatMoney(n,currency);
+  const money=(n: number)=>formatMoney(n,currency);
   return <article className="paper" id="print-area" aria-label="Live document preview">
     <div className="paper-header">
       <div className="paper-logo"><span>IS.</span><small>INVOICE STUDIO</small></div>
@@ -65,15 +86,15 @@ function Preview({draft,totals}){
 }
 
 export default function App(){
-  const [initial]=useState(readInitial);
-  const [draft,setDraft]=useState(initial.document);
+  const [initial]=useState<DraftLoadResult>(readInitial);
+  const [draft,setDraft]=useState<InvoiceDraft>(initial.document);
   const [blocked,setBlocked]=useState(initial.blocked);
   const [status,setStatus]=useState(initial.message||'Changes save automatically in this browser.');
   const [importing,setImporting]=useState(false);
-  const fileInput=useRef(null);
+  const fileInput=useRef<HTMLInputElement>(null);
   const issues=useMemo(()=>documentIssues(draft),[draft]);
   const totals=useMemo(()=>{try{return calculateTotals(draft);}catch{return null;}},[draft]);
-  const money=n=>formatMoney(n,draft.currency);
+  const money=(n: number)=>formatMoney(n,draft.currency);
 
   useEffect(()=>{
     if(blocked||typeof window==='undefined')return;
@@ -81,9 +102,10 @@ export default function App(){
     catch{setStatus('Could not save automatically. Download a JSON backup to keep a copy.');}
   },[draft,blocked]);
 
-  const update=(key,value)=>setDraft(current=>({...current,[key]:value}));
-  const updateParty=(side,key,value)=>setDraft(current=>({...current,[side]:{...current[side],[key]:value}}));
-  const updateItem=(id,key,value)=>setDraft(current=>({...current,items:current.items.map(item=>item.id===id?{...item,[key]:value}:item)}));
+  type SimpleField = 'type' | 'currency' | 'reference' | 'issuedOn' | 'dueOn' | 'discount' | 'tax' | 'notes' | 'terms';
+  const update=<K extends SimpleField>(key: K, value: InvoiceDraft[K])=>setDraft(current=>({...current,[key]:value}));
+  const updateParty=(side: 'from' | 'to', key: keyof PartyDetails, value: string)=>setDraft(current=>({...current,[side]:{...current[side],[key]:value}}));
+  const updateItem=(id: string, key: 'description' | 'quantity' | 'unitPrice', value: string)=>setDraft(current=>({...current,items:current.items.map(item=>item.id===id?{...item,[key]:value}:item)}));
   const addItem=()=>{
     setDraft(current=>{
       if(current.items.length>=MAX_ITEMS)return current;
@@ -91,8 +113,8 @@ export default function App(){
       return {...current,items:[...current.items,{id,description:'',quantity:'1',unitPrice:'0.00'}]};
     });
   };
-  const removeItem=id=>setDraft(current=>current.items.length<=1?current:{...current,items:current.items.filter(item=>item.id!==id)});
-  const replaceDocument=kind=>{
+  const removeItem=(id: string)=>setDraft(current=>current.items.length<=1?current:{...current,items:current.items.filter(item=>item.id!==id)});
+  const replaceDocument=(kind: 'blank' | 'sample')=>{
     if(blocked){setStatus('Resolve unreadable saved data before replacing the draft.');return;}
     if(!window.confirm('Replace your current draft? Download a JSON backup first if you need it.'))return;
     setDraft(kind==='sample'?createExampleDocument():createBlankDocument());
@@ -111,7 +133,7 @@ export default function App(){
       setStatus('JSON backup downloaded. Keep it somewhere safe.');
     }catch{setStatus('Could not download the backup.');}
   };
-  const importJSON=async event=>{
+  const importJSON=async (event: React.ChangeEvent<HTMLInputElement>)=>{
     const file=event.target.files?.[0];event.target.value='';
     if(!file)return;
     if(blocked){setStatus('Resolve unreadable saved data before importing.');return;}
@@ -147,7 +169,7 @@ export default function App(){
               </div>
               <div className="two-cols">
                 <Field label="Document number" id="reference" value={draft.reference} onChange={v=>update('reference',v)} required maxLength={80}/>
-                <div className="field"><label htmlFor="currency">Currency</label><select id="currency" value={draft.currency} onChange={e=>update('currency',e.target.value)}>{SUPPORTED_CURRENCIES.map(c=><option key={c} value={c}>{c}</option>)}</select></div>
+                <div className="field"><label htmlFor="currency">Currency</label><select id="currency" value={draft.currency} onChange={e=>{if(isCurrency(e.target.value))update('currency',e.target.value);}}>{SUPPORTED_CURRENCIES.map(c=><option key={c} value={c}>{c}</option>)}</select></div>
                 <Field label="Issue date" id="issuedOn" value={draft.issuedOn} onChange={v=>update('issuedOn',v)} type="date" required/>
                 <Field label={draft.type==='quote'?'Valid until':'Due date'} id="dueOn" value={draft.dueOn} onChange={v=>update('dueOn',v)} type="date" required/>
               </div>
