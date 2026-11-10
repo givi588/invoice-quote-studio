@@ -5,7 +5,7 @@ import { createServer } from 'vite';
 
 const server=await createServer({appType:'custom',server:{middlewareMode:true},logLevel:'error'});
 try {
-  const {default:App}=await server.ssrLoadModule('/src/App.jsx');
+  const {default:App}=await server.ssrLoadModule('/src/App.tsx');
   const html=renderToString(React.createElement(App));
   assert.match(html,/Beautiful documents/);
   assert.match(html,/Document workspace/);
