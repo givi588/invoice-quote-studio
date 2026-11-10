@@ -1,6 +1,6 @@
 # Invoice & Quote Studio
 
-A responsive, local-first **React + Vite** application for preparing quotes and invoices. It calculates item totals, discounts, and optional tax, and creates a print-ready document that can be saved as PDF with the browser's print dialog.
+A responsive, local-first **React + TypeScript + Vite** application for preparing quotes and invoices. It calculates item totals, discounts, and optional tax, and creates a print-ready document that can be saved as PDF with the browser's print dialog.
 
 > **Portfolio project, not accounting software.** It does not create official tax-compliant invoices for any jurisdiction, accept payments, verify businesses, or transmit orders.
 
@@ -33,6 +33,7 @@ Vite prints the local URL for the development server. There is no backend or dat
 ## Tests and build
 
 ```bash
+npm run typecheck
 npm test
 npm run test:render
 npm run build
@@ -41,6 +42,12 @@ npm run build
 Unit tests cover integer price calculations, quantities, percentage rounding, invalid values, serialization shape, and storage failure. The React render smoke test checks that the application renders actual HTML on the server through Vite's JSX transform, preventing the empty-page failure common to missing JSX runtime imports. The workflow also creates the production build.
 
 **Verification:** The pure Node calculation tests were run locally. The GitHub Actions workflow for [Pull Request #1](https://github.com/givi588/invoice-quote-studio/pull/1) also completed the expanded unit suite, React server-render smoke check, and production build successfully. Browser-level interaction and PDF print tests are separate manual checks.
+
+## Complete TypeScript walkthrough
+
+Read [the single practical TypeScript lesson](docs/TYPESCRIPT_LESSON.md) to see types, interfaces, unions, generics, runtime JSON validation, typed React forms, browser persistence, and the test/build workflow in one real app.
+
+**Migration compatibility:** The `invoice-quote-studio-v1` localStorage key and `version: 1` JSON backups are unchanged. The application is still browser-only, not a backend service.
 
 ## GitHub Pages deployment
 
@@ -70,11 +77,13 @@ If the repository is renamed, change `base` in `vite.config.js` to match the new
 
 | Path | Purpose |
 | --- | --- |
-| `src/App.jsx` | React editor, preview, export and import |
+| `src/App.tsx` | React editor, preview, export and import |
 | `src/styles.css` | Responsive UI and print layout |
-| `src/lib/invoice.js` | Pure calculations, draft validation and formatting |
-| `src/lib/storage.js` | Fail-safe localStorage read/write helpers |
-| `tests/invoice.test.js` | Native Node business logic and storage tests |
+| `src/lib/invoice.ts` | Pure calculations, draft validation and formatting |
+| `src/lib/storage.ts` | Fail-safe localStorage read/write helpers |
+| `tests/invoice.test.js` | Business logic and storage tests run with `tsx` |
+| `tsconfig.json` | Strict TypeScript compiler settings |
+| `docs/TYPESCRIPT_LESSON.md` | Complete learning walkthrough |
 | `scripts/render-smoke.mjs` | React server-render regression test |
 | `.github/workflows/deploy.yml` | Tests, build and GitHub Pages deployment |
 
